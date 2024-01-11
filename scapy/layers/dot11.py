@@ -1403,23 +1403,34 @@ class Dot11EltVendorSpecific(Dot11Elt):
     ]
 
     @classmethod
+    def oui_hook_ms(cls, _pkt=None, *args, **kwargs):
+        type_ = orb(_pkt[5])
+        if type_ == 0x01:
+            # MS WPA IE
+            return Dot11EltMicrosoftWPA
+        elif type_ == 0x02:
+            # MS WME IE TODO
+            # return Dot11EltMicrosoftWME
+            pass
+        elif type_ == 0x04:
+            # MS WPS IE TODO
+            # return Dot11EltWPS
+            pass
+        return Dot11EltVendorSpecific
+
+    # Add OUI specific handlers to this dictionary
+    oui_hooks = {
+        0x0050f2: oui_hook_ms,
+    }
+
+    @classmethod
     def dispatch_hook(cls, _pkt=None, *args, **kargs):
         if _pkt:
             oui = struct.unpack("!I", b"\x00" + _pkt[2:5])[0]
-            if oui == 0x0050f2:  # Microsoft
-                type_ = orb(_pkt[5])
-                if type_ == 0x01:
-                    # MS WPA IE
-                    return Dot11EltMicrosoftWPA
-                elif type_ == 0x02:
-                    # MS WME IE TODO
-                    # return Dot11EltMicrosoftWME
-                    pass
-                elif type_ == 0x04:
-                    # MS WPS IE TODO
-                    # return Dot11EltWPS
-                    pass
-                return Dot11EltVendorSpecific
+            oui_hook = cls.oui_hooks.get(oui, None)
+            if oui_hook is not None:
+                return oui_hook(_pkt, *args, **kargs)
+
         return cls
 
 
