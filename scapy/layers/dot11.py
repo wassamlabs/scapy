@@ -1402,26 +1402,8 @@ class Dot11EltVendorSpecific(Dot11Elt):
         StrLenField("info", "", length_from=lambda x: x.len - 3)
     ]
 
-    @classmethod
-    def oui_hook_ms(cls, _pkt=None, *args, **kwargs):
-        type_ = orb(_pkt[5])
-        if type_ == 0x01:
-            # MS WPA IE
-            return Dot11EltMicrosoftWPA
-        elif type_ == 0x02:
-            # MS WME IE TODO
-            # return Dot11EltMicrosoftWME
-            pass
-        elif type_ == 0x04:
-            # MS WPS IE TODO
-            # return Dot11EltWPS
-            pass
-        return Dot11EltVendorSpecific
-
     # Add OUI specific handlers to this dictionary
-    oui_hooks = {
-        0x0050f2: oui_hook_ms,
-    }
+    oui_hooks = {}
 
     @classmethod
     def dispatch_hook(cls, _pkt=None, *args, **kargs):
@@ -1430,6 +1412,20 @@ class Dot11EltVendorSpecific(Dot11Elt):
             oui_hook = cls.oui_hooks.get(oui, None)
             if oui_hook is not None:
                 return oui_hook(_pkt, *args, **kargs)
+            else:
+                type_ = orb(_pkt[5])
+                if type_ == 0x01:
+                    # MS WPA IE
+                    return Dot11EltMicrosoftWPA
+                elif type_ == 0x02:
+                    # MS WME IE TODO
+                    # return Dot11EltMicrosoftWME
+                    pass
+                elif type_ == 0x04:
+                    # MS WPS IE TODO
+                    # return Dot11EltWPS
+                    pass
+                return Dot11EltVendorSpecific
 
         return cls
 
